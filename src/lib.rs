@@ -4,6 +4,56 @@ use std::io::{self, Write};
 pub mod internal {
     use super::*;
     use std::time::{SystemTime, UNIX_EPOCH};
+    use std::sync::Once;
+
+    #[cfg(windows)]
+    mod console_win {
+        const STD_OUTPUT_HANDLE: i32 = -11;
+        const STD_ERROR_HANDLE: i32 = -12;
+        const ENABLE_VIRTUAL_TERMINAL_PROCESSING: u32 = 0x0004;
+
+        #[link(name = "kernel32")]
+        extern "system" {
+            fn SetConsoleOutputCP(wCodePageID: u32) -> i32;
+            fn SetConsoleCP(wCodePageID: u32) -> i32;
+            fn GetStdHandle(nStdHandle: i32) -> isize;
+            fn GetConsoleMode(hConsoleHandle: isize, lpMode: *mut u32) -> i32;
+            fn SetConsoleMode(hConsoleHandle: isize, dwMode: u32) -> i32;
+        }
+
+        pub unsafe fn enable_utf8_and_ansi() {
+            let _ = SetConsoleOutputCP(65001);
+            let _ = SetConsoleCP(65001);
+
+            let out = GetStdHandle(STD_OUTPUT_HANDLE);
+            if out != 0 && out != -1 {
+                let mut mode: u32 = 0;
+                if GetConsoleMode(out, &mut mode as *mut u32) != 0 {
+                    let _ = SetConsoleMode(out, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+                }
+            }
+
+            let err = GetStdHandle(STD_ERROR_HANDLE);
+            if err != 0 && err != -1 {
+                let mut mode: u32 = 0;
+                if GetConsoleMode(err, &mut mode as *mut u32) != 0 {
+                    let _ = SetConsoleMode(err, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+                }
+            }
+        }
+
+        // no direct WriteConsoleW; standard UTF-8 writes are fine once code page is set
+    }
+
+    static INIT: Once = Once::new();
+    fn init_console_once() {
+        INIT.call_once(|| {
+            #[cfg(windows)]
+            unsafe {
+                console_win::enable_utf8_and_ansi();
+            }
+        });
+    }
 
     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
     pub enum Level {
@@ -74,7 +124,7 @@ pub mod internal {
         let mut out = String::with_capacity(input.len() + 16);
         let bytes = input.as_bytes();
 
-        let mut i = 0;
+        let mut i: usize = 0;
 
         while i < bytes.len() {
             if bytes[i] == b'<' {
@@ -148,8 +198,10 @@ pub mod internal {
                     }
                 }
             }
-            out.push(bytes[i] as char);
-            i += 1;
+
+            let ch = input[i..].chars().next().unwrap();
+            out.push(ch);
+            i += ch.len_utf8();
         }
 
         out
@@ -188,6 +240,8 @@ pub mod internal {
     }
 
     pub fn print_with_prefix(level: Level, args: fmt::Arguments) {
+        init_console_once();
+
         let (bg, label, date, font) = level_styles(level);
 
         let ts = format_timestamp_utc();
@@ -211,10 +265,13 @@ pub mod internal {
             format!("{default_font_seq}{message_colored} ")
         };
 
-        let _ = writeln!(stdout, "{prefix_label}{ts_block}{msg_block}\x1b[0m");
+        let final_line = format!("{prefix_label}{ts_block}{msg_block}\x1b[0m");
+        let _ = writeln!(stdout, "{final_line}");
     }
 
     pub fn print_new_line() {
+        init_console_once();
+
         let mut stdout = io::stdout();
         let _ = writeln!(stdout);
     }
