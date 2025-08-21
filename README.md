@@ -25,6 +25,15 @@ logger::debug!("Debug message");
 logger::log!("User {} logged in", user_id);
 logger::warn!("<yellow,italic>Low disk</>: {:.1}%", percent);
 logger::error!("<red,bold>Failed</>: {}", err);
+
+// Setup aliases for common styling patterns
+logger::setup!("#", "purple,i");
+logger::setup!("!", "yellow,b");
+logger::setup!("*", "red,bold,underline");
+
+// Use aliases in messages
+logger::log!("<#>Component name</>: Load resource <!>en-US</>");
+logger::warn!("<*>Critical warning</>: System overload detected");
 ```
 
 ## Log levels (build-time)
@@ -87,6 +96,24 @@ logger::warn!("<yellow,underline>warning</>");
 logger::error!("<red,bold>error</>");
 logger::debug!("<gray,italic>debug</>");
 ```
+
+## Style aliases
+For frequently used styling patterns, you can create aliases using the `setup!` macro:
+
+```rust
+// Register aliases
+logger::setup!("#", "purple,i");      // Component names
+logger::setup!("!", "yellow,b");      // Important values
+logger::setup!("*", "red,bold,underline"); // Critical warnings
+logger::setup!("@", "cyan,italic");   // Debug info
+
+// Use aliases in messages
+logger::log!("<#>UserService</>: Processing <!>user123</>");
+logger::warn!("<*>Database connection failed</>: Retrying...");
+logger::debug!("<@>Cache miss</>: Loading from database");
+```
+
+Aliases are resolved at runtime and can contain any valid styling tokens (colors, bold, italic, underline).
 
 ## Log line format
 General view:

@@ -1,8 +1,27 @@
 use std::fmt;
+use std::collections::HashMap;
+use std::sync::{Mutex, LazyLock};
+
+static ALIASES: LazyLock<Mutex<HashMap<String, String>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub mod internal {
     use super::*;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    pub fn register_alias(alias: &str, tokens: &str) {
+        let mut aliases = ALIASES.lock().unwrap();
+        aliases.insert(alias.to_string(), tokens.to_string());
+    }
+
+    pub fn get_alias(alias: &str) -> Option<String> {
+        let aliases = ALIASES.lock().unwrap();
+        aliases.get(alias).cloned()
+    }
+
+    pub fn clear_aliases() {
+        let mut aliases = ALIASES.lock().unwrap();
+        aliases.clear();
+    }
 
     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
     pub enum Level {
@@ -87,8 +106,13 @@ pub mod internal {
                         let content_end = content_start + close_pos_rel;
                         let content = &input[content_start..content_end];
 
-                        // parse tag: flexible tokens: comma-separated any of [color, italic, bold, underline]
-                        let tokens: Vec<_> = tag_inner.split(',').map(|s| s.trim()).collect();
+                        // Check if this is an alias first
+                        let tokens_to_process: Vec<String> = if let Some(alias_tokens) = get_alias(tag_inner) {
+                            alias_tokens.split(',').map(|s| s.trim().to_string()).collect()
+                        } else {
+                            // parse tag: flexible tokens: comma-separated any of [color, italic, bold, underline]
+                            tag_inner.split(',').map(|s| s.trim().to_string()).collect()
+                        };
 
                         let mut italic_on = false;
                         let mut bold_on = false;
@@ -96,7 +120,7 @@ pub mod internal {
                         let mut color_fg: Option<&str> = None;
                         let mut color_bright_bold = false;
 
-                        for token in tokens.into_iter().filter(|s| !s.is_empty()) {
+                        for token in tokens_to_process.into_iter().filter(|s| !s.is_empty()) {
                             let lower = token.to_ascii_lowercase();
                             match lower.as_str() {
                                 "italic" | "i" => { italic_on = true; }
@@ -259,5 +283,12 @@ macro_rules! error {
 macro_rules! new_line {
     () => {{
         $crate::internal::print_new_line();
+    }};
+}
+
+#[macro_export]
+macro_rules! alias {
+    ($alias:expr, $tokens:expr) => {{
+        $crate::internal::register_alias($alias, $tokens);
     }};
 }
