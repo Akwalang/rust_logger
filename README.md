@@ -9,7 +9,7 @@ A small logging library with `debug!`, `log!`, `warn!`, `error!`, `new_line!` ma
   - `debug` → gray, `info` → blue & white, `warn` → orange, `error` → red.
 - Inline markup for local coloring and styles: `<tokens>Text</>`.
   - Tokens can be in any order.
-  - Supported: one color + `italic` | `i`, `bold` | `b`, `underline` | `u`.
+  - Supported: one color + `italic` | `i`, `bold` | `b`, `underline` | `u`, `dim` | `d`.
 
 ## Installation and usage
 
@@ -25,6 +25,7 @@ logger::debug!("Debug message");
 logger::log!("User {} logged in", user_id);
 logger::warn!("<yellow,italic>Low disk</>: {:.1}%", percent);
 logger::error!("<red,bold>Failed</>: {}", err);
+logger::log!("<gray,dim>Secondary info</>: {}", details);
 
 // Setup aliases for common styling patterns
 logger::setup!("#", "purple,i");
@@ -106,14 +107,16 @@ logger::setup!("#", "purple,i");      // Component names
 logger::setup!("!", "yellow,b");      // Important values
 logger::setup!("*", "red,bold,underline"); // Critical warnings
 logger::setup!("@", "cyan,italic");   // Debug info
+logger::setup!("~", "gray,dim");      // Secondary info
 
 // Use aliases in messages
 logger::log!("<#>UserService</>: Processing <!>user123</>");
 logger::warn!("<*>Database connection failed</>: Retrying...");
 logger::debug!("<@>Cache miss</>: Loading from database");
+logger::log!("<~>Secondary info</>: This is less important");
 ```
 
-Aliases are resolved at runtime and can contain any valid styling tokens (colors, bold, italic, underline).
+Aliases are resolved at runtime and can contain any valid styling tokens (colors, bold, italic, underline, dim).
 
 ## Log line format
 General view:
