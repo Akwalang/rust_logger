@@ -64,7 +64,7 @@ pub mod internal {
 
     fn level_styles(level: Level) -> (&'static str, &'static str, &'static str, &'static str) {
         match level {
-            Level::Debug => ("100", "DBG", "90", "30"),  // bg bright black (gray), fg gray
+            Level::Debug => ("100", "DBG", "90", "90"),  // bg bright black (gray), fg gray
             Level::Info => ("44", "LOG", "34", "37"),    // bg blue, fg blue
             Level::Warn => ("43", "WRN", "33", "33"),    // bg yellow, fg yellow
             Level::Error => ("41", "ERR", "31", "31"),   // bg red, fg red
