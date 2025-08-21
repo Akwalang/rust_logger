@@ -110,7 +110,7 @@ pub mod internal {
                         let tokens_to_process: Vec<String> = if let Some(alias_tokens) = get_alias(tag_inner) {
                             alias_tokens.split(',').map(|s| s.trim().to_string()).collect()
                         } else {
-                            // parse tag: flexible tokens: comma-separated any of [color, italic, bold, underline, dim]
+                            // parse tag: flexible tokens: comma-separated any of [color, italic, bold, underline, dim, strikethrough, reverse]
                             tag_inner.split(',').map(|s| s.trim().to_string()).collect()
                         };
 
@@ -118,6 +118,8 @@ pub mod internal {
                         let mut bold_on = false;
                         let mut underline_on = false;
                         let mut dim_on = false;
+                        let mut strikethrough_on = false;
+                        let mut reverse_on = false;
                         let mut color_fg: Option<&str> = None;
                         let mut color_bright_bold = false;
 
@@ -128,6 +130,8 @@ pub mod internal {
                                 "bold" | "b" => { bold_on = true; }
                                 "underline" | "u" => { underline_on = true; }
                                 "dim" | "d" => { dim_on = true; }
+                                "strikethrough" | "s" => { strikethrough_on = true; }
+                                "reverse" | "r" => { reverse_on = true; }
                                 _ => {
                                     if color_fg.is_none() {
                                         if let Some((fg, bright)) = color_name_to_fg_code(&lower) {
@@ -148,6 +152,8 @@ pub mod internal {
                         if italic_on { seq.push_str(";3"); }
                         if underline_on { seq.push_str(";4"); }
                         if dim_on { seq.push_str(";2"); }
+                        if strikethrough_on { seq.push_str(";9"); }
+                        if reverse_on { seq.push_str(";7"); }
 
                         if let Some(c) = color_fg {
                           seq.push_str(";"); seq.push_str(c);

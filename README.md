@@ -9,7 +9,7 @@ A small logging library with `debug!`, `log!`, `warn!`, `error!`, `new_line!` ma
   - `debug` → gray, `info` → blue & white, `warn` → orange, `error` → red.
 - Inline markup for local coloring and styles: `<tokens>Text</>`.
   - Tokens can be in any order.
-  - Supported: one color + `italic` | `i`, `bold` | `b`, `underline` | `u`, `dim` | `d`.
+  - Supported: one color + `italic` | `i`, `bold` | `b`, `underline` | `u`, `dim` | `d`, `strikethrough` | `s`, `reverse` | `r`.
 
 ## Installation and usage
 
@@ -26,6 +26,8 @@ logger::log!("User {} logged in", user_id);
 logger::warn!("<yellow,italic>Low disk</>: {:.1}%", percent);
 logger::error!("<red,bold>Failed</>: {}", err);
 logger::log!("<gray,dim>Secondary info</>: {}", details);
+logger::warn!("<red,strikethrough>Deprecated API</>: Use v2 instead");
+logger::error!("<red,reverse,bold>CRITICAL</>: System failure!");
 
 // Setup aliases for common styling patterns
 logger::setup!("#", "purple,i");
@@ -108,15 +110,19 @@ logger::setup!("!", "yellow,b");      // Important values
 logger::setup!("*", "red,bold,underline"); // Critical warnings
 logger::setup!("@", "cyan,italic");   // Debug info
 logger::setup!("~", "gray,dim");      // Secondary info
+logger::setup!("x", "red,strikethrough"); // Deprecated content
+logger::setup!("!!!", "red,reverse,bold"); // Emergency alerts
 
 // Use aliases in messages
 logger::log!("<#>UserService</>: Processing <!>user123</>");
 logger::warn!("<*>Database connection failed</>: Retrying...");
 logger::debug!("<@>Cache miss</>: Loading from database");
 logger::log!("<~>Secondary info</>: This is less important");
+logger::warn!("<x>Old API method</>: Use the new one instead");
+logger::error!("<!!!>SYSTEM FAILURE</>: Immediate action required!");
 ```
 
-Aliases are resolved at runtime and can contain any valid styling tokens (colors, bold, italic, underline, dim).
+Aliases are resolved at runtime and can contain any valid styling tokens (colors, bold, italic, underline, dim, strikethrough, reverse).
 
 ## Log line format
 General view:
